@@ -27,24 +27,71 @@ Instead of manually analyzing lengthy reports, Prism uses AI to extract key info
 
 ```
 
-### 🗺️ Corporate Insight Map
+### AI Insight Map
 
-* **Professional Aesthetic:** A clean, minimalistic, yet colorful visual intelligence graph.
-* **Dynamic Node Styling:** Features color-coded professional category accents (Emerald for *Revenue & Financials*, Soft Blue for *Product Ecosystems*, and Muted Rose for *Risk/Threat Factors*) to ensure immediate visual scannability without clutter.
+Converts complex reports into structured visual knowledge maps.
 
-### 📊 Financial Reporting & SWOT Matrix
+**Helps users identify:**
+- Main business themes
+- Related insights
+- Important trends
+- Connected information
 
-* **De-cluttered Layouts:** Redesigned financial and KPI table stylesheets featuring clear border padding, explicit alignment, and structured data grids.
-* **Automated SWOT Parsing:** Separates explicit operational Strengths, Weaknesses, Opportunities, and Threats into actionable executive grids instantly upon document upload.
+## 📑 Professional Report Generator
+
+Generates executive-ready business reports from uploaded documents.
+
+**Supports:**
+- Executive summaries
+- KPI analysis
+- Performance evaluation
+- Opportunities and risks
+- Strategic recommendations
+
+**Multi-document mode enables:**
+- Comparative reports
+- Performance differences
+- Trend analysis
+- Consolidated business insights
+
+
+## 🎯 SWOT Analysis Generator
+
+Automatically creates a structured SWOT matrix.
+
+**Generates:**
+- Strengths
+- Weaknesses
+- Opportunities
+- Threats
+
+Presented in a concise business format suitable for decision-making.
 
 ### 🎴 Executive AI Deck Generator
 
-* **Strict Two-Point Format:** Every generated slide strictly features **exactly 2 concise bullet points** accompanied by strong bold headings—eliminating text-heavy presentations.
-* **Visual Minimalism:** Completely omitted unnecessary "Suggested Visual" text lines to keep slides clean and board-ready.
+Transforms business documents into professional presentation decks.
+**Features:**
+- Concise bullet generation
+- Automated slide structure
+- Business-focused storytelling
+  
 * **Multiple Theming Options:** Supports 3 built-in custom visual configurations (including corresponding background stylings):
 * *Corporate Executive* (Deep Navy / Clean Gray Slate)
 * *Modern Startup* (High-Contrast White / Slate Accent)
 * *Data Analytics* (Dark Matte / Soft Charcoal Panels)
+
+## 💡 AI Recommendation Engine
+
+Generates actionable business recommendations.
+
+**Provides:**
+- Priority-based recommendations
+- Business impact
+- Supporting insights
+- Expandable recommendation cards
+
+
+---
 
 
 ### 🎙️ Audio Briefing Room (Podcast Mode)
@@ -92,6 +139,6 @@ Prism can assist with:
 
 Distributed under the MIT License. 
 
+---
 
 
-```
