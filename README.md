@@ -1,6 +1,7 @@
 Prism-Business-Intelligence-Application
 
 ---
+<img width="1919" height="893" alt="image" src="https://github.com/user-attachments/assets/e3382044-831a-4d8d-927e-5f0073a7e149" />
 
 
 # Prism App — Business Intelligence Notebook & Analysis Platform
