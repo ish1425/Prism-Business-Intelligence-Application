@@ -1,0 +1,1939 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prism - AI Business Intelligence</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { 50: '#f0f9ff', 100: '#e0f2fe', 500: '#0ea5e9', 600: '#0284c7', 900: '#0c4a6e' }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Chart.js for Dashboards -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- PDF.js for text extraction and rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- PptxGenJS for PowerPoint generation and downloads -->
+    <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; overflow: hidden; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        
+        /* Markdown Styles inside prose content */
+        .prose h1, .prose h2, .prose h3 { font-weight: 600; margin-top: 1.5em; margin-bottom: 0.5em; color: inherit; }
+        .prose h1 { font-size: 1.5rem; } .prose h2 { font-size: 1.25rem; }
+        .prose p { margin-bottom: 1em; line-height: 1.6; color: inherit; }
+        .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; color: inherit;}
+        .prose strong { font-weight: 600; color: inherit; }
+        
+        /* Clean and Spacious Report Table Layouts */
+        .prose table {
+            width: 100%;
+            margin: 1.5rem 0;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.825rem;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+        .dark .prose table {
+            border-color: #334155;
+        }
+        .prose th {
+            background-color: #f8fafc;
+            color: #334155;
+            font-weight: 600;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        .dark .prose th {
+            background-color: #0f172a;
+            color: #cbd5e1;
+            border-color: #334155;
+        }
+        .prose td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0;
+            color: inherit;
+        }
+        .dark .prose td {
+            border-color: #334155;
+        }
+        .prose th:last-child, .prose td:last-child {
+            border-right: 0;
+        }
+        .prose tr:last-child td {
+            border-bottom: 0;
+        }
+        .prose tr:nth-child(even) {
+            background-color: #fbfcfe;
+        }
+        .dark .prose tr:nth-child(even) {
+            background-color: #1e293b/30;
+        }
+        
+        /* Interactive Tree Styles */
+        .tree-node-line {
+            position: absolute; left: -16px; top: 14px; width: 14px; border-top: 2px solid #e2e8f0;
+        }
+        .dark .tree-node-line { border-top-color: #334155; }
+        .tree-children {
+            position: relative; padding-left: 24px; margin-left: 12px; border-left: 2px solid #e2e8f0;
+        }
+        .dark .tree-children { border-left-color: #334155; }
+
+        /* Transitions */
+        .panel-transition { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        /* Loading Dots */
+        .typing-dot { animation: typing 1.4s infinite ease-in-out both; }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+        
+        /* Resizer Handles */
+        .resizer {
+            width: 4px;
+            cursor: col-resize;
+            background-color: transparent;
+            z-index: 30;
+            transition: background-color 0.2s;
+        }
+        .resizer:hover, .resizer.is-resizing {
+            background-color: #0ea5e9;
+        }
+        
+        /* Ensure panels can be resized smoothly */
+        #leftPanel, #rightPanel {
+            flex-shrink: 0;
+            will-change: width;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-200 h-screen w-screen flex flex-col overflow-hidden transition-colors duration-200">
+
+    <header class="h-14 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex items-center justify-between px-4 shrink-0 z-20 relative shadow-sm">
+        <div class="flex items-center gap-3">
+            <button id="toggleLeftBtn" class="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-300" title="Toggle Documents">
+                <i class="ph ph-list text-xl"></i>
+            </button>
+            <div class="flex items-center gap-2">
+                <div class="w-7 h-7 flex items-center justify-center">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+                        <path d="M12 2L2 19H22L12 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" class="text-brand-600 dark:text-brand-500"/>
+                        <path d="M12 2V19" stroke="currentColor" stroke-width="2" stroke-linejoin="round" class="text-brand-400 dark:text-brand-300"/>
+                        <path d="M2 19L12 12L22 19" stroke="currentColor" stroke-width="2" stroke-linejoin="round" class="text-brand-500 dark:text-brand-400"/>
+                    </svg>
+                </div>
+                <h1 class="font-semibold tracking-tight text-lg">Prism <span class="text-xs font-normal text-slate-500 dark:text-slate-400 ml-1 border border-slate-200 dark:border-slate-700 rounded px-1.5 py-0.5 hidden sm:inline-block">Business Intelligence</span></h1>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 text-sm bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700">
+                <div id="apiStatusIndicator" class="w-2 h-2 rounded-full bg-slate-400"></div>
+                <span id="apiStatusText" class="text-slate-500 dark:text-slate-400 text-xs font-medium">Disconnected</span>
+            </div>
+            <button id="themeToggleBtn" class="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400">
+                <i class="ph ph-moon text-xl" id="themeIcon"></i>
+            </button>
+            <button id="toggleRightBtn" class="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-300" title="Toggle Chat">
+                <i class="ph ph-chat-centered-text text-xl"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 flex overflow-hidden relative">
+        
+        <!-- LEFT PANEL: Document Management -->
+        <aside id="leftPanel" style="width: 288px;" class="border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex flex-col panel-transition absolute inset-y-0 left-0 z-10 md:relative md:translate-x-0 -translate-x-full overflow-hidden">
+            <div class="p-4 border-b border-slate-200 dark:border-slate-800">
+                <h2 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Knowledge Base</h2>
+                <label for="fileUpload" class="flex flex-col items-center justify-center w-full h-24 border-2 border-slate-300 dark:border-slate-700 border-dashed rounded-lg cursor-pointer bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                        <i class="ph ph-upload-simple text-slate-500 mb-2 text-xl"></i>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 text-center px-2"><span class="font-semibold text-brand-600">Click to upload</span> commercial documents or reports</p>
+                    </div>
+                    <input id="fileUpload" type="file" class="hidden" accept="application/pdf" multiple />
+                </label>
+            </div>
+            <div class="flex-1 overflow-y-auto p-2" id="documentList">
+                <div class="text-center p-4 text-sm text-slate-500 dark:text-slate-400 italic mt-4" id="emptyDocsMsg">
+                    No documents uploaded yet.
+                </div>
+            </div>
+        </aside>
+
+        <!-- Left Resizer -->
+        <div id="leftResizer" class="resizer hidden md:block absolute left-[288px] top-0 bottom-0" style="transform: translateX(-50%);"></div>
+
+        <!-- CENTER PANEL: Content Viewer & Reordered Tabs -->
+        <section id="centerPanel" class="flex-1 flex flex-col bg-slate-50 dark:bg-slate-900 min-w-0 z-0">
+            <div class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 flex overflow-x-auto shrink-0 custom-scrollbar shadow-sm">
+                <div class="flex space-x-1.5 py-2.5" id="tabContainer">
+                    
+                    <!-- 1. Document Viewer -->
+                    <button data-tab="viewer" class="tab-btn px-3.5 py-1.5 text-xs font-semibold rounded-full text-brand-600 bg-brand-50 dark:bg-brand-950/40 border border-brand-200/50 dark:border-brand-900/30 transition-all whitespace-nowrap flex items-center gap-2 shadow-sm">
+                        <span class="w-5 h-5 rounded-full bg-brand-100 dark:bg-brand-900 flex items-center justify-center"><i class="ph ph-file-pdf"></i></span> Document
+                    </button>
+                    
+                    <!-- 2. Dashboard -->
+                    <button data-tab="dashboard" class="tab-btn px-3.5 py-1.5 text-xs font-semibold rounded-full text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 border border-slate-200/40 dark:border-slate-800/50 transition-all whitespace-nowrap flex items-center gap-2 shadow-sm">
+                        <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center"><i class="ph ph-chart-line-up"></i></span> Dashboard
+                    </button>
+
+                    <!-- 3. Business Insight Map -->
+                    <button data-tab="insight" class="tab-btn px-3.5 py-1.5 text-xs font-semibold rounded-full text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 border border-slate-200/40 dark:border-slate-800/50 transition-all whitespace-nowrap flex items-center gap-2 shadow-sm">
+                        <span class="w-5 h-5 rounded-full bg-sky-100 dark:bg-sky-950/40 text-sky-600 flex items-center justify-center"><i class="ph ph-tree-structure"></i></span> Insight Map
+                    </button>
+
+                    <!-- 4. Report Builder -->
+                    <button data-tab="report" class="tab-btn px-3.5 py-1.5 text-xs font-semibold rounded-full text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 border border-slate-200/40 dark:border-slate-800/50 transition-all whitespace-nowrap flex items-center gap-2 shadow-sm">
+                        <span class="w-5 h-5 rounded-full bg-cyan-100 dark:bg-cyan-950/40 text-cyan-600 flex items-center justify-center"><i class="ph ph-article"></i></span> Report
+                    </button>
+
+                    <!-- 5. SWOT Matrix -->
+                    <button data-tab="swot" class="tab-btn px-3.5 py-1.5 text-xs font-semibold rounded-full text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 border border-slate-200/40 dark:border-slate-800/50 transition-all whitespace-nowrap flex items-center gap-2 shadow-sm">
+                        <span class="w-5 h-5 rounded-full bg-rose-100 dark:bg-rose-950/40 text-rose-600 flex items-center justify-center"><i class="ph ph-target"></i></span> SWOT
+                    </button>
+
+                    <!-- 6. Deck Generator -->
+                    <button data-tab="deck" class="tab-btn px-3.5 py-1.5 text-xs font-semibold rounded-full text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 border border-slate-200/40 dark:border-slate-800/50 transition-all whitespace-nowrap flex items-center gap-2 shadow-sm">
+                        <span class="w-5 h-5 rounded-full bg-violet-100 dark:bg-violet-950/40 text-violet-600 flex items-center justify-center"><i class="ph ph-presentation-chart"></i></span> Deck Gen
+                    </button>
+
+                    <!-- 7. Recommendations -->
+                    <button data-tab="recommend" class="tab-btn px-3.5 py-1.5 text-xs font-semibold rounded-full text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 border border-slate-200/40 dark:border-slate-800/50 transition-all whitespace-nowrap flex items-center gap-2 shadow-sm">
+                        <span class="w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-950/40 text-amber-600 flex items-center justify-center"><i class="ph ph-lightbulb"></i></span> Recommendations
+                    </button>
+
+                    <!-- 8. Audio summary / Podcast -->
+                    <button data-tab="audio" class="tab-btn px-3.5 py-1.5 text-xs font-semibold rounded-full text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 border border-slate-200/40 dark:border-slate-800/50 transition-all whitespace-nowrap flex items-center gap-2 shadow-sm">
+                        <span class="w-5 h-5 rounded-full bg-purple-100 dark:bg-purple-950/40 text-purple-600 flex items-center justify-center"><i class="ph ph-headphones"></i></span> Audio Brief
+                    </button>
+
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="flex-1 overflow-auto relative p-4 md:p-6" id="mainContentArea">
+                
+                <!-- PDF Canvas-Based Viewer Tab -->
+                <div id="tab-viewer" class="tab-content h-full w-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-950 flex flex-col">
+                    <div id="pdfControls" class="hidden w-full border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-4 py-2.5 flex items-center justify-between shrink-0">
+                        <div class="flex items-center gap-2 overflow-hidden mr-2">
+                            <i class="ph ph-file-text text-brand-500 text-lg shrink-0"></i>
+                            <span class="text-xs font-semibold text-slate-600 dark:text-slate-300 truncate max-w-[200px]" id="currentViewerDocName">No document active</span>
+                        </div>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button id="zoomOutBtn" class="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-400" title="Zoom Out">
+                                <i class="ph ph-minus text-base"></i>
+                            </button>
+                            <span id="zoomPercent" class="text-xs font-semibold px-2 min-w-[50px] text-center text-slate-600 dark:text-slate-300">200%</span>
+                            <button id="zoomInBtn" class="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-400" title="Zoom In">
+                                <i class="ph ph-plus text-base"></i>
+                            </button>
+                            <div class="w-px h-4 bg-slate-300 dark:bg-slate-700 mx-1.5"></div>
+                            <button id="zoomResetBtn" class="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-400 flex items-center gap-1 text-xs font-medium" title="Reset Zoom">
+                                <i class="ph ph-arrows-counter-clockwise text-sm"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 w-full overflow-y-auto flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-900/40 relative">
+                        <div id="noPdfMessage" class="text-slate-400 flex flex-col items-center gap-2 absolute">
+                            <i class="ph ph-file-dashed text-4xl"></i>
+                            <p class="font-medium text-sm">Select a document to view</p>
+                        </div>
+                        <div id="pdfCanvasContainer" class="w-full h-full overflow-y-auto hidden p-4 sm:p-6 flex flex-col items-center gap-8"></div>
+                    </div>
+                </div>
+
+                <!-- Generic Content Container for AI Generated Tabs -->
+                <div id="tab-ai-content" class="tab-content hidden max-w-4xl mx-auto w-full pb-12">
+                    
+                    <!-- Unified Tab Export Header Button -->
+                    <div class="flex justify-end mb-4">
+                        <button id="globalTabDownloadBtn" class="px-3.5 py-1.8 bg-brand-500 hover:bg-brand-600 text-white rounded-lg text-xs font-semibold flex items-center gap-2 shadow-sm transition-colors hidden">
+                            <i class="ph ph-download-simple"></i> Download/Export Output
+                        </button>
+                    </div>
+
+                    <div id="aiLoadingState" class="hidden flex-col items-center justify-center py-20">
+                        <div class="flex space-x-2 mb-4">
+                            <div class="w-3 h-3 bg-brand-500 rounded-full typing-dot"></div>
+                            <div class="w-3 h-3 bg-brand-500 rounded-full typing-dot"></div>
+                            <div class="w-3 h-3 bg-brand-500 rounded-full typing-dot"></div>
+                        </div>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 animate-pulse" id="loadingText">Analyzing documents...</p>
+                    </div>
+
+                    <!-- Dashboard Tab -->
+                    <div id="dashboardContainer" class="hidden w-full space-y-6">
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4" id="dashKpis"></div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="dashCharts"></div>
+                        <div class="bg-white dark:bg-slate-950 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800" id="dashInsights"></div>
+                    </div>
+
+                    <!-- Business Insight Map (Professional Minimally Colorful Interactive Tree) -->
+                    <div id="insightMapContainer" class="hidden w-full bg-white dark:bg-slate-950 p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4 mb-6">
+                            <div>
+                                <h3 class="text-base font-semibold text-slate-900 dark:text-white">Business Insight Map</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Hierarchical visual diagram of categorized key metrics</p>
+                            </div>
+                        </div>
+                        <div id="insightTreeRoot" class="space-y-4"></div>
+                    </div>
+
+                    <!-- Deck Generator Presentation Interface -->
+                    <div id="deckContainer" class="hidden w-full space-y-6">
+                        <!-- Style Switcher -->
+                        <div class="bg-white dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                            <div class="flex items-center gap-2">
+                                <i class="ph ph-palette text-violet-500 text-lg"></i>
+                                <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Choose Presentation Theme Style:</span>
+                            </div>
+                            <div class="flex items-center gap-2" id="deckStyleSelector">
+                                <button data-style="corporate" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-500 text-white border border-transparent transition-colors">Corporate Executive</button>
+                                <button data-style="startup" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-transparent hover:border-slate-300 dark:hover:border-slate-700 transition-colors">Modern Startup</button>
+                                <button data-style="analytics" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-transparent hover:border-slate-300 dark:hover:border-slate-700 transition-colors">Data Analytics</button>
+                            </div>
+                        </div>
+                        <div id="deckSlidesList" class="space-y-6"></div>
+                    </div>
+
+                    <!-- Recommendations (Expandable Cards Interface) -->
+                    <div id="recommendContainer" class="hidden w-full space-y-4"></div>
+
+                    <!-- SWOT matrix 2x2 Layout -->
+                    <div id="swotContainer" class="hidden w-full bg-white dark:bg-slate-950 p-6 sm:p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6" id="swotMatrixGrid"></div>
+                    </div>
+
+                    <!-- Audio Report Conversational Script + Synthesizer Player -->
+                    <div id="audioBriefContainer" class="hidden w-full space-y-6">
+                        <div class="bg-white dark:bg-slate-950 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                                    <i class="ph ph-microphone-stage text-2xl animate-pulse"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 dark:text-white text-base">Analytical Audio Brief</h3>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">Host dialogue containing an exchange with female Lead Analyst</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button id="playPodcastBtn" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs rounded-lg flex items-center gap-2 shadow-md transition-colors">
+                                    <i class="ph-bold ph-play"></i> Play Brief
+                                </button>
+                                <button id="stopPodcastBtn" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs rounded-lg flex items-center gap-2 shadow-md transition-colors hidden">
+                                    <i class="ph-bold ph-stop"></i> Stop
+                                </button>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-slate-950 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm" id="podcastScriptBody"></div>
+                    </div>
+
+                    <!-- General Analytical tab container (used for standard report formatting) -->
+                    <div id="aiContentContainer" class="prose dark:prose-invert max-w-none w-full bg-white dark:bg-slate-950 p-8 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 hidden">
+                        <!-- Content injected here -->
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Right Resizer -->
+        <div id="rightResizer" class="resizer hidden md:block absolute right-[320px] top-0 bottom-0" style="transform: translateX(50%);"></div>
+
+        <!-- RIGHT PANEL: Chat Interface -->
+        <aside id="rightPanel" style="width: 320px;" class="border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex flex-col panel-transition absolute inset-y-0 right-0 z-10 md:relative md:translate-x-0 translate-x-full shadow-xl md:shadow-none overflow-hidden">
+            
+            <div class="p-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+                <div class="flex flex-col gap-2">
+                    <label class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex justify-between items-center">
+                        API Connection
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-brand-500 hover:text-brand-600 lowercase normal-case text-[10px]">Get Key</a>
+                    </label>
+                    <div class="relative">
+                        <input type="password" id="apiKeyInput" placeholder="Enter Gemini API Key" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm rounded-md px-3 py-2 pr-8 focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500 transition-colors text-slate-800 dark:text-slate-200">
+                        <button id="saveKeyBtn" class="absolute right-2 top-1.5 text-slate-400 hover:text-brand-500">
+                            <i class="ph-bold ph-check"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 custom-scrollbar" id="chatHistory">
+                <!-- Shortened Welcome Message -->
+                <div class="flex gap-3 animate-fade-in">
+                    <div class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 flex items-center justify-center shrink-0 text-brand-600 dark:text-brand-400">
+                        <i class="ph-fill ph-robot"></i>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-3 rounded-2xl rounded-tl-sm text-sm shadow-sm">
+                        <p class="font-medium text-xs">Hello! I'm your Business Intelligence Assistant. Upload your corporate reports or spreadsheets and let's begin analyzing details!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-3 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+                <form id="chatForm" class="relative">
+                    <textarea id="chatInput" rows="1" placeholder="Ask about the data..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 pr-12 focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500 resize-none text-sm custom-scrollbar transition-colors"></textarea>
+                    <button type="submit" id="sendBtn" class="absolute right-2 bottom-2 w-8 h-8 flex items-center justify-center bg-brand-500 hover:bg-brand-600 text-white rounded-lg transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="ph-bold ph-paper-plane-right"></i>
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+    </main>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // --- State Management ---
+        const state = {
+            apiKey: '',
+            documents: [], // { id, name, file, size, date, blobUrl, fullText: '', pages: [{page: 1, text: ''}] }
+            selectedDocIds: new Set(),
+            activeTab: 'viewer',
+            theme: 'light',
+            tabCache: {}, // Store cached analytical outputs
+            pdfZoom: 2.0, 
+            activeViewerDocId: null,
+            deckTheme: 'corporate', // corporate, startup, analytics
+            activeSpeechSynthesisUtterance: null,
+            isPlayingAudio: false
+        };
+
+        const SYSTEM_PROMPT = `You are an expert Business Intelligence Analyst specializing in business reports, revenue data, CRM insights, market analyses, and business performance documents. Your role is to help business stakeholders understand complex commercial information clearly and actionably.
+
+MANDATORY RULES FOR ANSWERS AND REPORT GENERATION:
+1. Citation and Reference Formatting Rules:
+   - Write answers naturally and prioritize readability.
+   - Do not insert source references after every sentence or bullet point.
+   - First provide a complete, well-structured answer.
+   - After each major section or insight, provide a consolidated "Sources" section.
+   - Group related citations together instead of repeating them throughout the response.
+   - Keep references visually separate from the main explanation.
+   - Use the format:
+     Answer Content
+     Sources:
+     • Document Name — Page X
+     • Document Name — Page Y
+   - If multiple statements originate from the same source, cite that source only once for the relevant section.
+   - Avoid interrupting the flow of the explanation with excessive citations.
+   - Citations should support the answer, not dominate it.
+   - When comparing multiple documents, provide a dedicated "Sources Referenced" section at the end of the comparison.
+   - Maintain a clean business-report style presentation.
+2. If no documents are loaded or the answer is unrelated to the context, you must explicitly state: "(Answered from general knowledge because no matching document context is currently loaded/selected)."
+3. Keep insights structured, concise, and business-focused. Avoid long conversational bloat in generated tab outputs.`;
+
+        // --- DOM Elements ---
+        const els = {
+            toggleLeftBtn: document.getElementById('toggleLeftBtn'),
+            toggleRightBtn: document.getElementById('toggleRightBtn'),
+            leftPanel: document.getElementById('leftPanel'),
+            rightPanel: document.getElementById('rightPanel'),
+            leftResizer: document.getElementById('leftResizer'),
+            rightResizer: document.getElementById('rightResizer'),
+            themeToggleBtn: document.getElementById('themeToggleBtn'),
+            themeIcon: document.getElementById('themeIcon'),
+            fileUpload: document.getElementById('fileUpload'),
+            documentList: document.getElementById('documentList'),
+            emptyDocsMsg: document.getElementById('emptyDocsMsg'),
+            tabContainer: document.getElementById('tabContainer'),
+            tabViewer: document.getElementById('tab-viewer'),
+            tabAiContent: document.getElementById('tab-ai-content'),
+            globalTabDownloadBtn: document.getElementById('globalTabDownloadBtn'),
+            pdfCanvasContainer: document.getElementById('pdfCanvasContainer'),
+            noPdfMessage: document.getElementById('noPdfMessage'),
+            aiLoadingState: document.getElementById('aiLoadingState'),
+            loadingText: document.getElementById('loadingText'),
+            aiContentContainer: document.getElementById('aiContentContainer'),
+            dashboardContainer: document.getElementById('dashboardContainer'),
+            insightMapContainer: document.getElementById('insightMapContainer'),
+            insightTreeRoot: document.getElementById('insightTreeRoot'),
+            deckContainer: document.getElementById('deckContainer'),
+            deckStyleSelector: document.getElementById('deckStyleSelector'),
+            deckSlidesList: document.getElementById('deckSlidesList'),
+            recommendContainer: document.getElementById('recommendContainer'),
+            swotContainer: document.getElementById('swotContainer'),
+            swotMatrixGrid: document.getElementById('swotMatrixGrid'),
+            audioBriefContainer: document.getElementById('audioBriefContainer'),
+            playPodcastBtn: document.getElementById('playPodcastBtn'),
+            stopPodcastBtn: document.getElementById('stopPodcastBtn'),
+            podcastScriptBody: document.getElementById('podcastScriptBody'),
+            apiKeyInput: document.getElementById('apiKeyInput'),
+            saveKeyBtn: document.getElementById('saveKeyBtn'),
+            apiStatusIndicator: document.getElementById('apiStatusIndicator'),
+            apiStatusText: document.getElementById('apiStatusText'),
+            chatForm: document.getElementById('chatForm'),
+            chatInput: document.getElementById('chatInput'),
+            chatHistory: document.getElementById('chatHistory'),
+            sendBtn: document.getElementById('sendBtn'),
+            pdfControls: document.getElementById('pdfControls'),
+            currentViewerDocName: document.getElementById('currentViewerDocName'),
+            zoomPercent: document.getElementById('zoomPercent'),
+            zoomInBtn: document.getElementById('zoomInBtn'),
+            zoomOutBtn: document.getElementById('zoomOutBtn'),
+            zoomResetBtn: document.getElementById('zoomResetBtn')
+        };
+
+        let chartInstances = [];
+
+        function init() {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                toggleTheme(true);
+            }
+            
+            const savedKey = localStorage.getItem('prism_api_key');
+            if (savedKey) {
+                els.apiKeyInput.value = savedKey;
+                handleSaveKey();
+            }
+
+            setupEventListeners();
+        }
+
+        function setupEventListeners() {
+            // UI Panel toggling and collapse
+            els.toggleLeftBtn.addEventListener('click', () => togglePanel(els.leftPanel));
+            els.toggleRightBtn.addEventListener('click', () => togglePanel(els.rightPanel));
+            els.themeToggleBtn.addEventListener('click', () => toggleTheme());
+
+            setupResizers();
+
+            els.fileUpload.addEventListener('change', handleFileUpload);
+            els.saveKeyBtn.addEventListener('click', handleSaveKey);
+            els.apiKeyInput.addEventListener('keypress', (e) => e.key === 'Enter' && handleSaveKey());
+
+            els.chatForm.addEventListener('submit', handleChatSubmit);
+            els.chatInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) { 
+                    e.preventDefault(); 
+                    els.chatForm.dispatchEvent(new Event('submit')); 
+                }
+            });
+            els.chatInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+                if(this.value === '') this.style.height = 'auto';
+            });
+
+            els.tabContainer.addEventListener('click', (e) => {
+                const btn = e.target.closest('button');
+                if (btn && btn.dataset.tab) switchTab(btn.dataset.tab);
+            });
+
+            els.zoomInBtn.addEventListener('click', () => adjustZoom(0.2));
+            els.zoomOutBtn.addEventListener('click', () => adjustZoom(-0.2));
+            els.zoomResetBtn.addEventListener('click', () => resetZoom());
+
+            els.deckStyleSelector.addEventListener('click', (e) => {
+                const styleBtn = e.target.closest('button');
+                if (styleBtn) {
+                    Array.from(els.deckStyleSelector.children).forEach(b => {
+                        b.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-transparent hover:border-slate-300 dark:hover:border-slate-700 transition-colors";
+                    });
+                    styleBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-500 text-white border border-transparent transition-colors";
+                    state.deckTheme = styleBtn.dataset.style;
+                    const contextHash = getContextHash();
+                    const cacheKey = `deck_${contextHash}`;
+                    if (state.tabCache[cacheKey]) {
+                        renderTabResult('deck', state.tabCache[cacheKey]);
+                    }
+                }
+            });
+
+            els.playPodcastBtn.addEventListener('click', () => togglePodcastSpeech());
+            els.stopPodcastBtn.addEventListener('click', () => stopPodcastSpeech());
+            els.globalTabDownloadBtn.addEventListener('click', () => handleTabExportDownload());
+        }
+
+        // --- STREAMING_CHUNK: Managing responsive panel controls... ---
+        function togglePanel(panel) {
+            const isLeft = panel.id === 'leftPanel';
+            const resizer = isLeft ? els.leftResizer : els.rightResizer;
+            
+            const isDesktop = window.innerWidth >= 768;
+            let isOpen = isDesktop ? (panel.style.width !== '0px') : (!panel.classList.contains('-translate-x-full') && !panel.classList.contains('translate-x-full'));
+
+            if (isOpen) {
+                panel.dataset.lastWidth = panel.style.width || (isLeft ? '288px' : '320px');
+                panel.style.width = '0px';
+                panel.style.borderLeftWidth = '0px';
+                panel.style.borderRightWidth = '0px';
+                if (isLeft) {
+                    panel.classList.add('-translate-x-full');
+                } else {
+                    panel.classList.add('translate-x-full');
+                }
+                if (resizer) resizer.style.display = 'none';
+            } else {
+                const targetWidth = panel.dataset.lastWidth || (isLeft ? '288px' : '320px');
+                panel.style.width = targetWidth;
+                panel.style.borderLeftWidth = '';
+                panel.style.borderRightWidth = '';
+                panel.classList.remove('-translate-x-full', 'translate-x-full');
+                if (isDesktop && resizer) resizer.style.display = 'block';
+            }
+            updateResizerPositions();
+        }
+
+        function setupResizers() {
+            let isResizing = false;
+            let currentResizer = null;
+            let startX = 0;
+            let startWidth = 0;
+
+            const startResize = (e, resizerId) => {
+                isResizing = true;
+                currentResizer = resizerId;
+                startX = e.clientX;
+                const panel = resizerId === 'left' ? els.leftPanel : els.rightPanel;
+                panel.classList.remove('panel-transition'); 
+                startWidth = parseInt(document.defaultView.getComputedStyle(panel).width, 10);
+                
+                document.getElementById(resizerId + 'Resizer').classList.add('is-resizing');
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+            };
+
+            els.leftResizer.addEventListener('mousedown', (e) => startResize(e, 'left'));
+            els.rightResizer.addEventListener('mousedown', (e) => startResize(e, 'right'));
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isResizing) return;
+
+                if (currentResizer === 'left') {
+                    const newWidth = startWidth + (e.clientX - startX);
+                    if (newWidth > 150 && newWidth < window.innerWidth / 2) {
+                        els.leftPanel.style.width = `${newWidth}px`;
+                    }
+                } else if (currentResizer === 'right') {
+                    const newWidth = startWidth - (e.clientX - startX);
+                    if (newWidth > 200 && newWidth < window.innerWidth / 2) {
+                        els.rightPanel.style.width = `${newWidth}px`;
+                    }
+                }
+                updateResizerPositions();
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (isResizing) {
+                    isResizing = false;
+                    els.leftPanel.classList.add('panel-transition');
+                    els.rightPanel.classList.add('panel-transition');
+                    els.leftResizer.classList.remove('is-resizing');
+                    els.rightResizer.classList.remove('is-resizing');
+                    document.body.style.cursor = '';
+                    document.body.style.userSelect = '';
+                }
+            });
+            
+            window.addEventListener('resize', updateResizerPositions);
+            setTimeout(updateResizerPositions, 100);
+        }
+
+        function updateResizerPositions() {
+            if(window.innerWidth < 768) {
+                els.leftResizer.style.display = 'none';
+                els.rightResizer.style.display = 'none';
+                return;
+            }
+            
+            if(!els.leftPanel.classList.contains('-translate-x-full')) {
+                els.leftResizer.style.display = 'block';
+                els.leftResizer.style.left = els.leftPanel.style.width;
+            }
+            
+            if(!els.rightPanel.classList.contains('translate-x-full')) {
+                els.rightResizer.style.display = 'block';
+                els.rightResizer.style.right = els.rightPanel.style.width;
+            }
+        }
+
+        function toggleTheme(forceDark = null) {
+            const isDark = forceDark !== null ? forceDark : !document.documentElement.classList.contains('dark');
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                els.themeIcon.classList.replace('ph-moon', 'ph-sun');
+                state.theme = 'dark';
+            } else {
+                document.documentElement.classList.remove('dark');
+                els.themeIcon.classList.replace('ph-sun', 'ph-moon');
+                state.theme = 'light';
+            }
+            if(state.activeTab === 'dashboard') {
+                const contextHash = getContextHash();
+                const cachedData = state.tabCache[`dashboard_${contextHash}`];
+                if(cachedData) renderDashboardUI(JSON.parse(cachedData));
+            }
+        }
+
+        function handleSaveKey() {
+            const key = els.apiKeyInput.value.trim();
+            if (key.length > 20) {
+                state.apiKey = key;
+                localStorage.setItem('prism_api_key', key);
+                els.apiStatusIndicator.classList.replace('bg-slate-400', 'bg-emerald-500');
+                els.apiStatusIndicator.classList.add('shadow-[0_0_8px_rgba(16,185,129,0.8)]');
+                els.apiStatusText.textContent = 'Connected';
+                els.apiKeyInput.type = 'password';
+            } else {
+                state.apiKey = '';
+                localStorage.removeItem('prism_api_key');
+                els.apiStatusIndicator.classList.replace('bg-emerald-500', 'bg-slate-400');
+                els.apiStatusIndicator.classList.remove('shadow-[0_0_8px_rgba(16,185,129,0.8)]');
+                els.apiStatusText.textContent = 'Disconnected';
+            }
+        }
+
+        function addMessageToChat(role, text) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `flex gap-3 ${role === 'user' ? 'flex-row-reverse' : ''}`;
+            
+            let iconHtml = '';
+            let bgClass = '';
+            
+            if (role === 'user') {
+                iconHtml = `<div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center shrink-0 text-slate-600 dark:text-slate-300"><i class="ph-fill ph-user"></i></div>`;
+                bgClass = 'bg-brand-500 text-white rounded-tr-sm';
+            } else {
+                iconHtml = `<div class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 flex items-center justify-center shrink-0 text-brand-600 dark:text-brand-400"><i class="ph-fill ph-robot"></i></div>`;
+                bgClass = 'bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-tl-sm shadow-sm';
+            }
+
+            msgDiv.innerHTML = `
+                ${iconHtml}
+                <div class="${bgClass} p-3 rounded-2xl text-sm max-w-[85%] prose prose-sm ${role==='user'?'text-white':'dark:prose-invert'}">
+                    ${role === 'user' ? text : marked.parse(text)}
+                </div>
+            `;
+            els.chatHistory.appendChild(msgDiv);
+            els.chatHistory.scrollTop = els.chatHistory.scrollHeight;
+        }
+
+        // --- STREAMING_CHUNK: Processing uploaded files... ---
+        async function handleFileUpload(e) {
+            const files = Array.from(e.target.files);
+            if (!files.length) return;
+
+            els.emptyDocsMsg.style.display = 'none';
+
+            for (const file of files) {
+                const id = 'doc_' + Math.random().toString(36).substr(2, 9);
+                const blobUrl = URL.createObjectURL(file);
+                
+                const docObj = {
+                    id,
+                    name: file.name,
+                    size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
+                    date: new Date().toLocaleDateString(),
+                    blobUrl,
+                    file: file,
+                    isExtracting: true,
+                    fullText: '',
+                    pages: []
+                };
+
+                state.documents.push(docObj);
+                state.selectedDocIds.add(id);
+                renderDocumentList();
+                
+                extractTextFromPDF(docObj);
+            }
+            e.target.value = '';
+            state.tabCache = {}; 
+            
+            if(state.activeTab === 'viewer') {
+                viewDocument(state.documents[state.documents.length-1].id);
+            }
+        }
+
+        async function extractTextFromPDF(docObj) {
+            try {
+                const arrayBuffer = await docObj.file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                let fullText = '';
+                
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    
+                    docObj.pages.push({ page: i, text: pageText });
+                    fullText += `\n--- Page ${i} ---\n${pageText}`;
+                }
+                
+                docObj.fullText = fullText;
+                docObj.isExtracting = false;
+                renderDocumentList();
+            } catch (error) {
+                console.error("PDF extraction failure:", error);
+                docObj.isExtracting = false;
+                docObj.error = true;
+                renderDocumentList();
+            }
+        }
+
+        function renderDocumentList() {
+            els.documentList.innerHTML = '';
+            if (state.documents.length === 0) {
+                els.emptyDocsMsg.style.display = 'block';
+                els.noPdfMessage.style.display = 'flex';
+                els.pdfCanvasContainer.style.display = 'none';
+                els.pdfControls.classList.add('hidden');
+                return;
+            }
+
+            state.documents.forEach(doc => {
+                const isSelected = state.selectedDocIds.has(doc.id);
+                const div = document.createElement('div');
+                div.className = `flex flex-col p-3 mb-2 rounded-lg border cursor-pointer transition-colors ${isSelected ? 'bg-brand-50 border-brand-200 dark:bg-brand-900/20 dark:border-brand-800/50' : 'bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'}`;
+                
+                div.innerHTML = `
+                    <div class="flex items-start justify-between gap-2" onclick="toggleDocSelection('${doc.id}', event)">
+                        <div class="flex items-center gap-2 overflow-hidden">
+                            <i class="ph-fill ph-file-pdf text-red-500 text-lg shrink-0"></i>
+                            <span class="text-xs font-semibold truncate" title="${doc.name}">${doc.name}</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <input type="checkbox" class="accent-brand-500 w-4 h-4 cursor-pointer" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleDocSelection('${doc.id}')">
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between mt-2 pl-6">
+                        <div class="text-[10px] text-slate-500 flex items-center gap-2">
+                            <span>${doc.size}</span> • <span>${doc.date}</span>
+                            ${doc.isExtracting ? '<span class="text-brand-500 flex items-center gap-1"><i class="ph ph-spinner animate-spin"></i> Reading</span>' : ''}
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="event.stopPropagation(); viewDocument('${doc.id}')" class="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-500" title="View"><i class="ph ph-eye"></i></button>
+                            <button onclick="event.stopPropagation(); removeDocument('${doc.id}')" class="p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-slate-500 hover:text-red-500" title="Remove"><i class="ph ph-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+                els.documentList.appendChild(div);
+            });
+        }
+
+        function toggleDocSelection(id, event) {
+            if (state.selectedDocIds.has(id)) {
+                state.selectedDocIds.delete(id);
+            } else {
+                state.selectedDocIds.add(id);
+            }
+            state.tabCache = {}; 
+            renderDocumentList();
+        }
+
+        function removeDocument(id) {
+            const doc = state.documents.find(d => d.id === id);
+            if (doc) URL.revokeObjectURL(doc.blobUrl);
+            
+            state.documents = state.documents.filter(d => d.id !== id);
+            state.selectedDocIds.delete(id);
+            state.tabCache = {};
+            
+            if (state.activeViewerDocId === id) {
+                state.activeViewerDocId = null;
+                els.pdfCanvasContainer.innerHTML = '';
+                els.pdfCanvasContainer.style.display = 'none';
+                els.pdfControls.classList.add('hidden');
+                els.noPdfMessage.style.display = 'flex';
+            }
+            
+            renderDocumentList();
+        }
+
+        async function viewDocument(id) {
+            const doc = state.documents.find(d => d.id === id);
+            if (doc) {
+                state.activeViewerDocId = id;
+                switchTab('viewer');
+                els.noPdfMessage.style.display = 'none';
+                els.pdfCanvasContainer.style.display = 'flex';
+                els.pdfControls.classList.remove('hidden');
+                els.currentViewerDocName.textContent = doc.name;
+                
+                if(window.innerWidth < 768) {
+                    els.leftPanel.classList.add('-translate-x-full');
+                }
+
+                renderPdfCanvasList(doc);
+            }
+        }
+
+        async function renderPdfCanvasList(docObj) {
+            els.pdfCanvasContainer.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-20 text-slate-500">
+                    <i class="ph ph-spinner animate-spin text-3xl mb-3 text-brand-500"></i>
+                    <p class="text-sm font-medium">Rendering PDF pages...</p>
+                </div>
+            `;
+            
+            try {
+                const arrayBuffer = await docObj.file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                els.pdfCanvasContainer.innerHTML = ''; 
+                
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const pageWrapper = document.createElement('div');
+                    pageWrapper.className = "mb-4 shadow-md bg-white p-2 border border-slate-200/50 dark:border-slate-800/80";
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.className = "block max-w-full h-auto";
+                    pageWrapper.appendChild(canvas);
+                    
+                    els.pdfCanvasContainer.appendChild(pageWrapper);
+                    
+                    const context = canvas.getContext('2d');
+                    const viewport = page.getViewport({ scale: state.pdfZoom });
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    
+                    const renderContext = {
+                        canvasContext: context,
+                        viewport: viewport
+                    };
+                    
+                    await page.render(renderContext).promise;
+                }
+            } catch (error) {
+                console.error("PDF Canvas rendering issue:", error);
+                els.pdfCanvasContainer.innerHTML = `
+                    <div class="flex flex-col items-center text-center p-8 text-red-600 rounded-lg">
+                        <i class="ph ph-warning-circle text-4xl mb-2"></i>
+                        <p class="text-sm font-semibold">Error rendering pages inside preview canvas.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function adjustZoom(amount) {
+            const nextZoom = parseFloat((state.pdfZoom + amount).toFixed(1));
+            if (nextZoom >= 0.8 && nextZoom <= 3.0) {
+                state.pdfZoom = nextZoom;
+                els.zoomPercent.textContent = `${Math.round(state.pdfZoom * 100)}%`;
+                const doc = state.documents.find(d => d.id === state.activeViewerDocId);
+                if (doc) renderPdfCanvasList(doc);
+            }
+        }
+
+        function resetZoom() {
+            state.pdfZoom = 2.0;
+            els.zoomPercent.textContent = `200%`;
+            const doc = state.documents.find(d => d.id === state.activeViewerDocId);
+            if (doc) renderPdfCanvasList(doc);
+        }
+
+        function getSelectedContext() {
+            let contextStr = "";
+            const selectedDocs = state.documents.filter(d => state.selectedDocIds.has(d.id));
+            if (selectedDocs.length === 0) return null;
+            
+            contextStr += "=== CONTEXT DOCUMENTS ===\n";
+            selectedDocs.forEach(doc => {
+                if(doc.isExtracting) return; 
+                contextStr += `\nDocument Name: ${doc.name}\n`;
+                contextStr += doc.fullText;
+                contextStr += `\n--- End of ${doc.name} ---\n`;
+            });
+            contextStr += "\n=========================\n";
+            return contextStr;
+        }
+
+        function getContextHash() {
+            return Array.from(state.selectedDocIds).sort().join('_');
+        }
+
+        // --- STREAMING_CHUNK: Triggering API calls... ---
+        async function callGeminiAPI(systemPrompt, userPrompt) {
+            if (!state.apiKey) {
+                return { error: "API Connection disconnected. Please verify or input your API key in the connection panel." };
+            }
+
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${state.apiKey}`;
+            
+            const payload = {
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                contents: [{ parts: [{ text: userPrompt }] }],
+                generationConfig: { temperature: 0.1 } 
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                if (data.error) {
+                    return { error: data.error.message || "Gemini endpoint analysis failed." };
+                }
+
+                if (data.candidates && data.candidates[0].content.parts[0].text) {
+                    return { text: data.candidates[0].content.parts[0].text };
+                }
+                return { error: "Received blank or unsupported content from standard endpoint." };
+            } catch (error) {
+                return { error: "Endpoint connection timed out: " + error.message };
+            }
+        }
+
+        // --- STREAMING_CHUNK: Managing reordered tabs switching... ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                if (btn.dataset.tab === tabId) {
+                    btn.className = "tab-btn px-3.5 py-1.5 text-xs font-semibold rounded-full text-brand-600 bg-brand-50 dark:bg-brand-950/40 border border-brand-200/50 dark:border-brand-900/30 transition-all whitespace-nowrap flex items-center gap-2 shadow-sm";
+                } else {
+                    btn.className = "tab-btn px-3.5 py-1.5 text-xs font-semibold rounded-full text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 border border-slate-200/40 dark:border-slate-800/50 transition-all whitespace-nowrap flex items-center gap-2 shadow-sm";
+                }
+            });
+
+            if (state.activeTab === 'audio' && tabId !== 'audio') {
+                stopPodcastSpeech();
+            }
+
+            state.activeTab = tabId;
+
+            if (tabId === 'viewer') {
+                els.tabViewer.classList.remove('hidden');
+                els.tabAiContent.classList.add('hidden');
+                els.globalTabDownloadBtn.classList.add('hidden');
+            } else {
+                els.tabViewer.classList.add('hidden');
+                els.tabAiContent.classList.remove('hidden');
+                
+                // Hide download button specifically for Audio Brief
+                if (tabId === 'audio') {
+                    els.globalTabDownloadBtn.classList.add('hidden');
+                } else {
+                    els.globalTabDownloadBtn.classList.remove('hidden');
+                }
+                
+                generateTabContent(tabId);
+            }
+        }
+
+        // --- STREAMING_CHUNK: Assembling prompts... ---
+        async function generateTabContent(tabId) {
+            const contextHash = getContextHash();
+            const cacheKey = `${tabId}_${contextHash}`;
+
+            els.aiContentContainer.classList.add('hidden');
+            els.dashboardContainer.classList.add('hidden');
+            els.insightMapContainer.classList.add('hidden');
+            els.deckContainer.classList.add('hidden');
+            els.recommendContainer.classList.add('hidden');
+            els.swotContainer.classList.add('hidden');
+            els.audioBriefContainer.classList.add('hidden');
+            
+            if (tabId !== 'audio') {
+                els.globalTabDownloadBtn.classList.add('hidden');
+            }
+            
+            els.aiLoadingState.classList.replace('hidden', 'flex');
+            
+            if (!contextHash) {
+                els.aiLoadingState.classList.replace('flex', 'hidden');
+                els.aiContentContainer.classList.remove('hidden');
+                els.aiContentContainer.innerHTML = `<div class="text-center py-10 text-slate-500"><i class="ph ph-info text-3xl mb-2"></i><p>Knowledge base is empty. Upload one or more documents to execute analysis.</p></div>`;
+                return;
+            }
+
+            const selectedDocs = state.documents.filter(d => state.selectedDocIds.has(d.id));
+            if (selectedDocs.some(d => d.isExtracting)) {
+                 els.loadingText.textContent = "Processing and reading documents... Stand by.";
+                 setTimeout(() => generateTabContent(tabId), 1000);
+                 return;
+            }
+
+            if (state.tabCache[cacheKey]) {
+                els.aiLoadingState.classList.replace('flex', 'hidden');
+                renderTabResult(tabId, state.tabCache[cacheKey]);
+                return;
+            }
+
+            els.loadingText.textContent = `Assembling ${tabId} summary data...`;
+            const context = getSelectedContext();
+            let prompt = "";
+            const documentCount = selectedDocs.length;
+
+            switch (tabId) {
+                case 'dashboard':
+                    prompt = `Analyze the loaded document set. Detect if single or multi-doc context.
+                    If multiple documents are selected, automatically include comparative fields inside the dashboard JSON where relevant.
+                    Return ONLY a raw, un-enclosed JSON structure mapping:
+                    {
+                      "kpis": [
+                        {"label": "KPI Name", "value": "Val", "trend": "+X% vs baseline", "status": "up/down/neutral"}
+                      ],
+                      "charts": [
+                        {"title": "Chart Name", "type": "bar/line/doughnut", "labels": ["Label1", "Label2"], "datasets": [{"label": "Data Label", "data": [10, 20]}]}
+                      ],
+                      "insights": {
+                        "top_findings": ["Factual Finding 1 [Page X, Doc Y]", "Finding 2 [Page A, Doc B]"],
+                        "risks": ["Risk 1 [Page M, Doc N]"]
+                      }
+                    }
+                    ${context}`;
+                    break;
+
+                case 'insight':
+                    prompt = `Generate a structured, keyword-only Business Insight Map. 
+                    Root Node is "Business Performance".
+                    Main Branch Nodes MUST be: Revenue, Products, Regions, Customers, Opportunities, Risks.
+                    For each main branch, output 3 to 4 granular sub-branch key facts strictly based on the text.
+                    CRITICAL COMPLIANCE RULES:
+                    - NO PARAGRAPHS OR DISCURSIVE TEXT.
+                    - SHORT KEYWORDS ONLY (2 to 5 words maximum per leaf).
+                    - Appended exact page citation [Page X, Doc Name] is REQUIRED on every leaf node.
+                    Return ONLY a strict raw JSON structured like:
+                    {
+                      "name": "Business Performance",
+                      "children": [
+                        {
+                          "name": "Revenue",
+                          "children": [
+                            {"name": "Sub-point 2-5 words [Page X, Doc Y]"}
+                          ]
+                        }
+                      ]
+                    }
+                    ${context}`;
+                    break;
+
+                case 'deck':
+                    prompt = `Generate presentation slides representing findings in the documents. 
+                    Provide 6-8 structured slides. Do not request or generate visual_suggestions or suggested diagrams.
+                    Return ONLY a raw JSON structure matching:
+                    {
+                      "slides": [
+                        {
+                          "title": "Slide Title",
+                          "bullets": [
+                            "Heading 1: Bullet Point 1 details [Page X, Doc Y]",
+                            "Heading 2: Bullet Point 2 details [Page A, Doc B]"
+                          ]
+                        }
+                      ]
+                    }
+                    CRITICAL BULLET RULES:
+                    - You MUST generate EXACTLY 2 bullet points per slide (no more, no less).
+                    - Each bullet point MUST begin with a crisp, short bold-ready Heading (2-4 words) followed by a colon ":" and then a detailed insight sentence. (Format: "Heading: Bullet details").
+                    - No paragraphs. No duplicate lines. Incorporate comparative analysis if 2+ documents are present.
+                    ${context}`;
+                    break;
+
+                case 'recommend':
+                    prompt = `Formulate targeted, actionable business recommendations based on the documents.
+                    Return ONLY a raw JSON array of recommendation objects:
+                    [
+                      {
+                        "title": "Action Title",
+                        "summary": "One sentence summary of recommendation.",
+                        "details": "In-depth strategy description supported by clear page references [Page X, Doc Y].",
+                        "impact": "Projected business outcome.",
+                        "priority": "High/Medium/Low"
+                      }
+                    ]
+                    ${context}`;
+                    break;
+
+                case 'report':
+                    if (documentCount === 1) {
+                        prompt = `Generate a standard business analytical report based on the uploaded document. Include:
+                        - Executive Summary: Factual highlights, core trends, key metrics. No long filler paragraphs.
+                        - KPI Overview (Use beautifully spaced markdown tables for KPI and financial summaries to avoid clutter.)
+                        - Performance Analysis
+                        - Opportunities & Risks
+                        - Document-backed Recommendations with citations [Page X, Doc Y]
+                        - Analytical Conclusion.
+                        ${context}`;
+                    } else {
+                        prompt = `Perform a comprehensive, comparative business analysis report across all uploaded documents. Compare metrics, trend deviations, and commercial progress. Include:
+                        - Executive Summary (Comparative)
+                        - Document Overview Table (Use beautifully spaced markdown tables for comparison summaries to avoid clutter.)
+                        - Key Similarities & Key Differences
+                        - SWOT Comparison Indicators
+                        - Strategic Recommendations backed by [Page X, Doc Name] citations.
+                        ${context}`;
+                    }
+                    break;
+
+                case 'swot':
+                    prompt = `Conduct a SWOT Analysis of the commercial commercial status based on the documents.
+                    CRITICAL MATRIX RULES:
+                    - MAX 5 points per quadrant.
+                    - Every point MUST be under 6 words.
+                    - NO paragraph explanations.
+                    - EVERY POINT MUST contain its citation [Page X, Doc Name].
+                    Return ONLY a strict raw JSON matching:
+                    {
+                      "strengths": ["Point 1 [Page X, Doc Y]", "Point 2"],
+                      "weaknesses": [...],
+                      "opportunities": [...],
+                      "threats": [...]
+                    }
+                    ${context}`;
+                    break;
+
+                case 'audio':
+                    prompt = `Generate a highly natural, conversational podcast script dialogue between a 'Host' and a 'Chief Analyst'.
+                    Script goals:
+                    - Limit dialogue to 2-3 minutes spoken maximum.
+                    - Use simple, direct, commercial language.
+                    - Absolutely NO stage directions, cues, or sound effect descriptions (e.g. no "(music fades)" or "(Host smiles)").
+                    - Highlight key metrics, trends, and risk assessments with integrated page references.
+                    Return ONLY a raw JSON structure mapping the dialogue turns:
+                    {
+                      "podcast": [
+                        {"speaker": "Host", "text": "Greeting and opening..."},
+                        {"speaker": "Analyst", "text": "Response with metrics..."},
+                        {"speaker": "Host", "text": "Follow up question..."},
+                        {"speaker": "Analyst", "text": "Conclusion..."}
+                      ]
+                    }
+                    ${context}`;
+                    break;
+            }
+
+            const response = await callGeminiAPI(SYSTEM_PROMPT, prompt);
+            els.aiLoadingState.classList.replace('flex', 'hidden');
+
+            if (response.error) {
+                els.aiContentContainer.classList.remove('hidden');
+                els.aiContentContainer.innerHTML = `<div class="p-4 bg-red-50 text-red-600 rounded-lg border border-red-200">Analysis Error: ${response.error}</div>`;
+                return;
+            }
+
+            state.tabCache[cacheKey] = response.text;
+            renderTabResult(tabId, response.text);
+        }
+
+        function renderTabResult(tabId, rawText) {
+            let cleanedText = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+            if (tabId !== 'audio') {
+                els.globalTabDownloadBtn.classList.remove('hidden');
+            }
+
+            switch (tabId) {
+                case 'dashboard':
+                    try {
+                        const data = JSON.parse(cleanedText);
+                        renderDashboardUI(data);
+                        els.dashboardContainer.classList.remove('hidden');
+                    } catch (e) {
+                        renderFallbackText(rawText);
+                    }
+                    break;
+
+                case 'insight':
+                    try {
+                        const treeData = JSON.parse(cleanedText);
+                        renderInsightTreeUI(treeData);
+                        els.insightMapContainer.classList.remove('hidden');
+                    } catch (e) {
+                        renderFallbackText(rawText);
+                    }
+                    break;
+
+                case 'deck':
+                    try {
+                        const deckData = JSON.parse(cleanedText);
+                        renderDeckUI(deckData);
+                        els.deckContainer.classList.remove('hidden');
+                    } catch (e) {
+                        renderFallbackText(rawText);
+                    }
+                    break;
+
+                case 'recommend':
+                    try {
+                        const recs = JSON.parse(cleanedText);
+                        renderRecommendationsUI(recs);
+                        els.recommendContainer.classList.remove('hidden');
+                    } catch (e) {
+                        renderFallbackText(rawText);
+                    }
+                    break;
+
+                case 'report':
+                    els.aiContentContainer.classList.remove('hidden');
+                    els.aiContentContainer.innerHTML = marked.parse(rawText);
+                    break;
+
+                case 'swot':
+                    try {
+                        const swotData = JSON.parse(cleanedText);
+                        renderSwotMatrixUI(swotData);
+                        els.swotContainer.classList.remove('hidden');
+                    } catch (e) {
+                        renderFallbackText(rawText);
+                    }
+                    break;
+
+                case 'audio':
+                    try {
+                        const audioData = JSON.parse(cleanedText);
+                        renderAudioScriptUI(audioData);
+                        els.audioBriefContainer.classList.remove('hidden');
+                    } catch (e) {
+                        renderFallbackText(rawText);
+                    }
+                    break;
+            }
+        }
+
+        function renderFallbackText(text) {
+            els.aiContentContainer.classList.remove('hidden');
+            els.aiContentContainer.innerHTML = `<div class="text-orange-500 mb-4 text-xs font-semibold"><i class="ph ph-warning-circle"></i> Structured formatting constraint reset to text summary.</div>` + marked.parse(text);
+        }
+
+        // --- STREAMING_CHUNK: Formatting dashboard metric components... ---
+        function renderDashboardUI(data) {
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#e2e8f0' : '#1e293b';
+            const gridColor = isDark ? '#334155' : '#e2e8f0';
+
+            const kpiContainer = document.getElementById('dashKpis');
+            kpiContainer.innerHTML = '';
+            if(data.kpis) {
+                data.kpis.forEach(kpi => {
+                    let statusColor = 'text-slate-500';
+                    let statusIcon = '<i class="ph-bold ph-minus"></i>';
+                    if(kpi.status === 'up') { statusColor = 'text-emerald-500'; statusIcon = '<i class="ph-bold ph-trend-up"></i>'; }
+                    if(kpi.status === 'down') { statusColor = 'text-red-500'; statusIcon = '<i class="ph-bold ph-trend-down"></i>'; }
+                    
+                    kpiContainer.innerHTML += `
+                        <div class="bg-white dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col shadow-sm">
+                            <span class="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">${kpi.label}</span>
+                            <span class="text-xl font-bold mt-1 text-slate-800 dark:text-white">${kpi.value}</span>
+                            ${kpi.trend ? `<span class="text-xs mt-2 font-semibold flex items-center gap-1 ${statusColor}">${statusIcon} ${kpi.trend}</span>` : ''}
+                        </div>
+                    `;
+                });
+            }
+
+            const chartContainer = document.getElementById('dashCharts');
+            chartContainer.innerHTML = '';
+            chartInstances.forEach(c => c.destroy());
+            chartInstances = [];
+
+            if(data.charts) {
+                data.charts.forEach((chartData, index) => {
+                    const canvasId = `chart_${index}`;
+                    chartContainer.innerHTML += `
+                        <div class="bg-white dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                            <h3 class="text-xs font-semibold mb-4 text-slate-700 dark:text-slate-300 uppercase tracking-wider">${chartData.title}</h3>
+                            <div class="relative h-64 w-full">
+                                <canvas id="${canvasId}"></canvas>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                setTimeout(() => {
+                    data.charts.forEach((chartData, index) => {
+                        const ctx = document.getElementById(`chart_${index}`);
+                        if(!ctx) return;
+                        
+                        const palette = ['rgba(14, 165, 233, 0.7)', 'rgba(16, 185, 129, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(139, 92, 246, 0.7)'];
+                        const borderPalette = ['rgb(14, 165, 233)', 'rgb(16, 185, 129)', 'rgb(245, 158, 11)', 'rgb(139, 92, 246)'];
+
+                        if(chartData.datasets) {
+                            chartData.datasets.forEach((ds, i) => {
+                                ds.backgroundColor = (chartData.type === 'pie' || chartData.type === 'doughnut') ? palette : palette[i % palette.length];
+                                ds.borderColor = (chartData.type === 'pie' || chartData.type === 'doughnut') ? (isDark ? '#020617' : '#ffffff') : borderPalette[i % borderPalette.length];
+                                ds.borderWidth = 1.5;
+                            });
+                        }
+
+                        const chart = new Chart(ctx, {
+                            type: chartData.type || 'bar',
+                            data: { labels: chartData.labels, datasets: chartData.datasets },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: { legend: { labels: { color: textColor, font: { size: 10 } } } },
+                                scales: (chartData.type === 'pie' || chartData.type === 'doughnut') ? {} : {
+                                    x: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 9 } } },
+                                    y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 9 } } }
+                                }
+                            }
+                        });
+                        chartInstances.push(chart);
+                    });
+                }, 50);
+            }
+
+            const insightsContainer = document.getElementById('dashInsights');
+            insightsContainer.innerHTML = '';
+            if(data.insights) {
+                let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-6">';
+                if(data.insights.top_findings && data.insights.top_findings.length > 0) {
+                    html += `<div><h3 class="text-xs font-bold mb-3 uppercase tracking-wider text-slate-500 flex items-center gap-2"><i class="ph-bold ph-star text-brand-500"></i> Key Findings</h3><ul class="space-y-2 text-xs">`;
+                    data.insights.top_findings.forEach(f => html += `<li class="flex gap-2"><i class="ph-bold ph-check text-emerald-500 mt-0.5"></i> <span>${marked.parseInline(f)}</span></li>`);
+                    html += `</ul></div>`;
+                }
+                if(data.insights.risks && data.insights.risks.length > 0) {
+                    html += `<div><h3 class="text-xs font-bold mb-3 uppercase tracking-wider text-slate-500 flex items-center gap-2"><i class="ph-bold ph-warning text-orange-500"></i> Identified Risks</h3><ul class="space-y-2 text-xs">`;
+                    data.insights.risks.forEach(r => html += `<li class="flex gap-2"><i class="ph-bold ph-warning-circle text-orange-500 mt-0.5"></i> <span>${marked.parseInline(r)}</span></li>`);
+                    html += `</ul></div>`;
+                }
+                html += '</div>';
+                insightsContainer.innerHTML = html;
+            }
+        }
+
+        // --- STREAMING_CHUNK: Formatting Professional Colorful Tree Nodes... ---
+        function getInsightMapNodeTheme(name) {
+            const nameLower = name.toLowerCase();
+            if (nameLower.includes('revenue') || nameLower.includes('performance')) {
+                return 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800/60';
+            } else if (nameLower.includes('product')) {
+                return 'bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950/30 dark:text-blue-300 dark:border-blue-800/60';
+            } else if (nameLower.includes('region')) {
+                return 'bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-950/30 dark:text-purple-300 dark:border-purple-800/60';
+            } else if (nameLower.includes('customer')) {
+                return 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800/60';
+            } else if (nameLower.includes('opportunity') || nameLower.includes('opportunities')) {
+                return 'bg-sky-50 text-sky-800 border-sky-200 dark:bg-sky-950/30 dark:text-sky-300 dark:border-sky-800/60';
+            } else if (nameLower.includes('risk')) {
+                return 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/30 dark:text-rose-300 dark:border-rose-800/60';
+            }
+            return 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800';
+        }
+
+        function renderInsightTreeUI(node, parentEl = els.insightTreeRoot, isRoot = true) {
+            if (isRoot) parentEl.innerHTML = '';
+
+            const wrapper = document.createElement('div');
+            wrapper.className = isRoot ? "space-y-4" : "mt-2 relative";
+
+            const themeClasses = isRoot 
+                ? 'bg-brand-500 text-white shadow-sm font-semibold border-transparent' 
+                : getInsightMapNodeTheme(node.name);
+
+            const header = document.createElement('div');
+            header.className = `flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium w-fit border transition-all ${themeClasses}`;
+
+            if (!isRoot) {
+                const line = document.createElement('div');
+                line.className = "tree-node-line";
+                wrapper.appendChild(line);
+            }
+
+            header.innerHTML = `
+                <i class="ph ${isRoot ? 'ph-tree-structure-fill' : node.children ? 'ph-folder-open-fill' : 'ph-dot-outline-fill'}"></i>
+                <span>${node.name}</span>
+            `;
+            wrapper.appendChild(header);
+
+            if (node.children && node.children.length > 0) {
+                const childrenContainer = document.createElement('div');
+                childrenContainer.className = "tree-children";
+                node.children.forEach(child => {
+                    renderInsightTreeUI(child, childrenContainer, false);
+                });
+                wrapper.appendChild(childrenContainer);
+            }
+
+            parentEl.appendChild(wrapper);
+        }
+
+        // --- STREAMING_CHUNK: Structuring Presentation Slide layouts... ---
+        function renderDeckUI(deckData) {
+            els.deckSlidesList.innerHTML = '';
+            
+            let slideBgClass = "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800";
+            let themeHeaderClass = "bg-slate-900 text-white";
+            let titleTextClass = "text-slate-800 dark:text-white";
+            let bulletTextClass = "text-slate-600 dark:text-slate-300";
+            let fontClass = "font-sans";
+            
+            if (state.deckTheme === 'corporate') {
+                slideBgClass = "bg-white dark:bg-slate-900 border-t-4 border-brand-600 shadow-md";
+                themeHeaderClass = "border-b border-slate-100 dark:border-slate-800 px-6 py-4 flex items-center justify-between bg-slate-50 dark:bg-slate-900/50";
+                titleTextClass = "text-brand-900 dark:text-brand-400 font-bold";
+                bulletTextClass = "text-slate-700 dark:text-slate-300";
+                fontClass = "font-sans";
+            } else if (state.deckTheme === 'startup') {
+                slideBgClass = "bg-gradient-to-tr from-brand-50/60 to-indigo-50/60 dark:from-slate-950 dark:to-indigo-950/40 border border-indigo-100 dark:border-indigo-900/30 shadow-xl";
+                themeHeaderClass = "bg-gradient-to-r from-brand-500 to-indigo-500 px-6 py-4 flex items-center justify-between text-white";
+                titleTextClass = "text-indigo-950 dark:text-indigo-200 font-extrabold";
+                bulletTextClass = "text-indigo-900/90 dark:text-slate-300";
+                fontClass = "font-sans tracking-tight";
+            } else if (state.deckTheme === 'analytics') {
+                slideBgClass = "bg-slate-950 dark:bg-black border border-emerald-500/30 shadow-emerald-500/5 shadow-inner";
+                themeHeaderClass = "bg-slate-900/90 border-b border-emerald-500/20 px-6 py-4 flex items-center justify-between text-emerald-400";
+                titleTextClass = "text-emerald-300 font-mono";
+                bulletTextClass = "text-slate-300";
+                fontClass = "font-mono";
+            }
+
+            deckData.slides.forEach((slide, index) => {
+                const slideDiv = document.createElement('div');
+                slideDiv.className = `${slideBgClass} rounded-2xl overflow-hidden shadow-lg flex flex-col h-72 transition-all duration-300`;
+                
+                const bulletListHtml = slide.bullets.slice(0, 2).map(b => {
+                    const colonIndex = b.indexOf(':');
+                    if (colonIndex !== -1) {
+                        const heading = b.substring(0, colonIndex).trim();
+                        const body = b.substring(colonIndex + 1).trim();
+                        return `
+                            <li class="flex flex-col gap-0.5">
+                                <span class="font-bold text-xs ${state.deckTheme === 'analytics' ? 'text-emerald-400' : state.deckTheme === 'startup' ? 'text-indigo-600 dark:text-indigo-400' : 'text-brand-700 dark:text-brand-400'}">${heading}</span>
+                                <span class="text-xs ${bulletTextClass}">${marked.parseInline(body)}</span>
+                            </li>
+                        `;
+                    }
+                    return `<li class="text-xs ${bulletTextClass}">${marked.parseInline(b)}</li>`;
+                }).join('');
+
+                slideDiv.innerHTML = `
+                    <div class="${themeHeaderClass} px-6 py-4 flex items-center justify-between">
+                        <span class="text-xs uppercase tracking-widest font-semibold opacity-75">Slide ${index + 1}</span>
+                        <span class="text-[10px] bg-white/20 px-2.5 py-1 rounded text-white font-medium">Style: ${state.deckTheme.toUpperCase()}</span>
+                    </div>
+                    <div class="flex-1 p-6 flex flex-col justify-between ${fontClass}">
+                        <div>
+                            <h4 class="text-base font-bold ${titleTextClass} mb-4">${slide.title}</h4>
+                            <ul class="space-y-4 pl-2 list-none">
+                                ${bulletListHtml}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                els.deckSlidesList.appendChild(slideDiv);
+            });
+        }
+
+        // --- STREAMING_CHUNK: Building Expandable Recommendation Cards... ---
+        function renderRecommendationsUI(recs) {
+            els.recommendContainer.innerHTML = '';
+            
+            recs.forEach((rec, index) => {
+                const priorityColors = rec.priority?.toLowerCase() === 'high' 
+                    ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border-rose-200 dark:border-rose-900/30'
+                    : rec.priority?.toLowerCase() === 'medium'
+                    ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border-amber-200 dark:border-amber-900/30'
+                    : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/30';
+
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow";
+                
+                card.innerHTML = `
+                    <div class="px-5 py-4 flex items-center justify-between cursor-pointer select-none" onclick="toggleRecommendationCard(${index})">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs px-2.5 py-1 rounded-full border font-semibold ${priorityColors}">${rec.priority?.toUpperCase() || 'NORMAL'}</span>
+                            <h3 class="font-bold text-slate-800 dark:text-white text-sm">${rec.title}</h3>
+                        </div>
+                        <i class="ph ph-caret-down text-slate-400 transition-transform duration-200 text-lg" id="rec-caret-${index}"></i>
+                    </div>
+                    <div class="hidden border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/30 px-5 py-4 space-y-3" id="rec-body-${index}">
+                        <div>
+                            <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Summary Action</span>
+                            <p class="text-xs text-slate-700 dark:text-slate-300 mt-1 font-medium">${rec.summary}</p>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Document Evidence & Logic</span>
+                            <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">${marked.parseInline(rec.details)}</p>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Projected Business Impact</span>
+                            <div class="flex items-center gap-1.5 text-xs text-brand-600 dark:text-brand-400 mt-1 font-semibold">
+                                <i class="ph ph-chart-line"></i>
+                                <span>${rec.impact}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                els.recommendContainer.appendChild(card);
+            });
+        }
+
+        function toggleRecommendationCard(index) {
+            const body = document.getElementById(`rec-body-${index}`);
+            const caret = document.getElementById(`rec-caret-${index}`);
+            if (body && caret) {
+                const isHidden = body.classList.contains('hidden');
+                if (isHidden) {
+                    body.classList.remove('hidden');
+                    caret.classList.add('rotate-180');
+                } else {
+                    body.classList.add('hidden');
+                    caret.classList.remove('rotate-180');
+                }
+            }
+        }
+
+        // --- STREAMING_CHUNK: Formatting SWOT Matrix blocks... ---
+        function renderSwotMatrixUI(swotData) {
+            els.swotMatrixGrid.innerHTML = '';
+
+            const quadrants = [
+                { title: "Strengths", icon: "ph-shield-check text-emerald-500", bg: "bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200/50 dark:border-emerald-900/30", items: swotData.strengths || [] },
+                { title: "Weaknesses", icon: "ph-prohibit text-rose-500", bg: "bg-rose-50/40 dark:bg-rose-950/20 border-rose-200/50 dark:border-rose-900/30", items: swotData.weaknesses || [] },
+                { title: "Opportunities", icon: "ph-sparkle text-amber-500", bg: "bg-amber-50/40 dark:bg-amber-950/20 border-amber-200/50 dark:border-amber-900/30", items: swotData.opportunities || [] },
+                { title: "Threats", icon: "ph-shield-warning text-purple-500", bg: "bg-purple-50/40 dark:bg-purple-950/20 border-purple-200/50 dark:border-purple-900/30", items: swotData.threats || [] }
+            ];
+
+            quadrants.forEach(quad => {
+                const box = document.createElement('div');
+                box.className = `${quad.bg} p-5 rounded-2xl border flex flex-col shadow-sm`;
+                
+                box.innerHTML = `
+                    <div class="flex items-center gap-2 border-b border-slate-200/60 dark:border-slate-800/80 pb-3 mb-3">
+                        <i class="ph-bold ${quad.icon} text-lg"></i>
+                        <h4 class="font-bold text-slate-800 dark:text-white text-xs uppercase tracking-wider">${quad.title}</h4>
+                    </div>
+                    <ul class="space-y-2 text-xs flex-1">
+                        ${quad.items.length > 0 
+                            ? quad.items.map(item => `<li class="flex items-start gap-1.5"><span class="text-slate-400 mt-0.5">•</span><span class="text-slate-700 dark:text-slate-300 font-medium">${marked.parseInline(item)}</span></li>`).join('') 
+                            : '<li class="text-slate-400 dark:text-slate-600 italic">No document evidence found</li>'
+                        }
+                    </ul>
+                `;
+                els.swotMatrixGrid.appendChild(box);
+            });
+        }
+
+        // --- STREAMING_CHUNK: Formatting Audio script bubble elements... ---
+        function renderAudioScriptUI(audioData) {
+            els.podcastScriptBody.innerHTML = '';
+            
+            audioData.podcast.forEach(turn => {
+                const bubble = document.createElement('div');
+                bubble.className = "flex gap-4 p-4 border-b border-slate-100 dark:border-slate-800/80 last:border-0";
+                
+                const isHost = turn.speaker?.toLowerCase() === 'host';
+                
+                bubble.innerHTML = `
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isHost ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400' : 'bg-pink-100 text-pink-600 dark:bg-pink-950/40 dark:text-pink-400'}">
+                        <i class="ph-bold ${isHost ? 'ph-headset' : 'ph-microphone-stage'} text-lg"></i>
+                    </div>
+                    <div class="space-y-1">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">${turn.speaker}</span>
+                        <p class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">${turn.text}</p>
+                    </div>
+                `;
+                els.podcastScriptBody.appendChild(bubble);
+            });
+        }
+
+        // --- STREAMING_CHUNK: Managing TTS with high pitch female analyst... ---
+        function togglePodcastSpeech() {
+            if (state.isPlayingAudio) {
+                pausePodcastSpeech();
+                return;
+            }
+
+            const contextHash = getContextHash();
+            const cachedOutput = state.tabCache[`audio_${contextHash}`];
+            if (!cachedOutput) return;
+
+            let parsed;
+            try {
+                parsed = JSON.parse(cachedOutput.replace(/```json/gi, '').replace(/```/g, '').trim());
+            } catch (e) {
+                return;
+            }
+
+            if (!parsed.podcast || parsed.podcast.length === 0) return;
+
+            state.isPlayingAudio = true;
+            els.playPodcastBtn.innerHTML = `<i class="ph-bold ph-pause"></i> Pause Brief`;
+            els.stopPodcastBtn.classList.remove('hidden');
+
+            let currentTurnIndex = 0;
+
+            const speakNextTurn = () => {
+                if (!state.isPlayingAudio || currentTurnIndex >= parsed.podcast.length) {
+                    stopPodcastSpeech();
+                    return;
+                }
+
+                const turn = parsed.podcast[currentTurnIndex];
+                const utterance = new SpeechSynthesisUtterance(turn.text);
+                const voices = window.speechSynthesis.getVoices();
+                
+                if (turn.speaker?.toLowerCase() === 'host') {
+                    // Host Voice Settings (Professional Male Range)
+                    utterance.pitch = 0.85;
+                    utterance.rate = 1.0;
+                    
+                    const maleVoice = voices.find(v => 
+                        v.name.toLowerCase().includes('male') || 
+                        v.name.toLowerCase().includes('david') || 
+                        v.name.toLowerCase().includes('google us english') || 
+                        v.name.toLowerCase().includes('microsoft david')
+                    );
+                    if (maleVoice) utterance.voice = maleVoice;
+                } else {
+                    // Female Lead Analyst Voice Settings
+                    utterance.pitch = 1.35;
+                    utterance.rate = 1.05;
+                    
+                    const femaleVoice = voices.find(v => 
+                        v.name.toLowerCase().includes('female') || 
+                        v.name.toLowerCase().includes('zira') || 
+                        v.name.toLowerCase().includes('samantha') || 
+                        v.name.toLowerCase().includes('hazel') || 
+                        v.name.toLowerCase().includes('google uk english female') || 
+                        v.name.toLowerCase().includes('microsoft zira')
+                    );
+                    if (femaleVoice) utterance.voice = femaleVoice;
+                }
+
+                utterance.onend = () => {
+                    currentTurnIndex++;
+                    speakNextTurn();
+                };
+
+                utterance.onerror = () => {
+                    stopPodcastSpeech();
+                };
+
+                state.activeSpeechSynthesisUtterance = utterance;
+                window.speechSynthesis.speak(utterance);
+            };
+
+            if (window.speechSynthesis.paused) {
+                window.speechSynthesis.resume();
+            } else {
+                window.speechSynthesis.cancel();
+                speakNextTurn();
+            }
+        }
+
+        function pausePodcastSpeech() {
+            if (state.isPlayingAudio) {
+                window.speechSynthesis.pause();
+                state.isPlayingAudio = false;
+                els.playPodcastBtn.innerHTML = `<i class="ph-bold ph-play"></i> Resume Brief`;
+            }
+        }
+
+        function stopPodcastSpeech() {
+            window.speechSynthesis.cancel();
+            state.isPlayingAudio = false;
+            state.activeSpeechSynthesisUtterance = null;
+            els.playPodcastBtn.innerHTML = `<i class="ph-bold ph-play"></i> Play Brief`;
+            els.stopPodcastBtn.classList.add('hidden');
+        }
+
+        // --- STREAMING_CHUNK: Structuring exports and PPTX layout slides... ---
+        function handleTabExportDownload() {
+            const contextHash = getContextHash();
+            const rawOutput = state.tabCache[`${state.activeTab}_${contextHash}`];
+            if (!rawOutput) return;
+
+            let cleanedText = rawOutput.replace(/```json/gi, '').replace(/```/g, '').trim();
+
+            switch (state.activeTab) {
+                case 'dashboard':
+                    downloadBlob(new Blob([cleanedText], { type: 'application/json' }), `prism-dashboard-${contextHash}.json`);
+                    break;
+                case 'insight':
+                    downloadBlob(new Blob([cleanedText], { type: 'application/json' }), `prism-insight-map-${contextHash}.json`);
+                    break;
+                case 'deck':
+                    executeDeckPPTXDownload(cleanedText);
+                    break;
+                case 'recommend':
+                    executeRecommendationsCSVDownload(cleanedText);
+                    break;
+                case 'report':
+                    downloadBlob(new Blob([rawOutput], { type: 'text/markdown' }), `prism-analytical-report-${contextHash}.md`);
+                    break;
+                case 'swot':
+                    executeSwotCSVDownload(cleanedText);
+                    break;
+            }
+        }
+
+        function downloadBlob(blob, filename) {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function executeDeckPPTXDownload(jsonString) {
+            try {
+                const deckData = JSON.parse(jsonString);
+                const pptx = new PptxGenJS();
+                pptx.layout = 'LAYOUT_16x9';
+
+                deckData.slides.forEach((slide, idx) => {
+                    const pptxSlide = pptx.addSlide();
+                    
+                    let titleColor = "0284c7"; 
+                    let bulletColor = "334155";
+                    let bgColor = "F8FAFC";
+
+                    if (state.deckTheme === 'startup') {
+                        titleColor = "4F46E5"; 
+                        bgColor = "F5F3FF"; 
+                    } else if (state.deckTheme === 'analytics') {
+                        titleColor = "10B981"; 
+                        bgColor = "022C22"; 
+                        bulletColor = "ECFDF5";
+                    }
+
+                    pptxSlide.background = { fill: bgColor };
+
+                    pptxSlide.addText(slide.title, {
+                        x: 0.5, y: 0.5, w: 9, h: 1,
+                        fontSize: 24, bold: true, color: titleColor
+                    });
+
+                    const bulletTextObj = [];
+                    // Enforce exactly 2 bullets max
+                    slide.bullets.slice(0, 2).forEach(b => {
+                        const colonIndex = b.indexOf(':');
+                        if (colonIndex !== -1) {
+                            const heading = b.substring(0, colonIndex).trim();
+                            const body = b.substring(colonIndex + 1).trim();
+                            bulletTextObj.push({ text: heading + ": ", options: { bold: true, bullet: true, fontSize: 13, color: titleColor } });
+                            bulletTextObj.push({ text: body + "\n\n", options: { fontSize: 13, color: bulletColor } });
+                        } else {
+                            bulletTextObj.push({ text: b + "\n\n", options: { bullet: true, fontSize: 13, color: bulletColor } });
+                        }
+                    });
+
+                    pptxSlide.addText(bulletTextObj, {
+                        x: 0.5, y: 1.5, w: 8.5, h: 3,
+                        fontSize: 14, valign: 'top'
+                    });
+                });
+
+                pptx.writeFile({ fileName: `Prism-Business-Presentation-${getContextHash()}.pptx` });
+            } catch (e) {
+                console.error("PPTX Download error:", e);
+            }
+        }
+
+        function executeRecommendationsCSVDownload(jsonString) {
+            try {
+                const recs = JSON.parse(jsonString);
+                let csv = 'Priority,Title,Summary,Details,Impact\n';
+                recs.forEach(r => {
+                    csv += `"${r.priority || ''}","${r.title || ''}","${r.summary || ''}","${r.details || ''}","${r.impact || ''}"\n`;
+                });
+                downloadBlob(new Blob([csv], { type: 'text/csv' }), `prism-recommendations-${getContextHash()}.csv`);
+            } catch (e) {}
+        }
+
+        function executeSwotCSVDownload(jsonString) {
+            try {
+                const swot = JSON.parse(jsonString);
+                let csv = 'Quadrant,Insights\n';
+                ['strengths', 'weaknesses', 'opportunities', 'threats'].forEach(quad => {
+                    const items = swot[quad] || [];
+                    items.forEach(item => {
+                        csv += `"${quad.toUpperCase()}","${item}"\n`;
+                    });
+                });
+                downloadBlob(new Blob([csv], { type: 'text/csv' }), `prism-swot-${getContextHash()}.csv`);
+            } catch (e) {}
+        }
+
+        // --- STREAMING_CHUNK: Running chatbot event loops... ---
+        async function handleChatSubmit(e) {
+            e.preventDefault();
+            const input = els.chatInput.value.trim();
+            if (!input) return;
+
+            addMessageToChat('user', input);
+            els.chatInput.value = '';
+            els.chatInput.style.height = 'auto';
+            els.sendBtn.disabled = true;
+
+            const loadingId = 'loading_' + Date.now();
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = loadingId;
+            loadingDiv.className = `flex gap-3`;
+            loadingDiv.innerHTML = `
+                <div class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 flex items-center justify-center shrink-0 text-brand-600 dark:text-brand-400"><i class="ph-fill ph-robot"></i></div>
+                <div class="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-3 rounded-2xl rounded-tl-sm shadow-sm flex flex-col gap-2 w-48 animate-pulse">
+                    <div class="flex items-center gap-1.5">
+                        <div class="w-2 h-2 bg-brand-400 rounded-full typing-dot"></div>
+                        <div class="w-2 h-2 bg-brand-400 rounded-full typing-dot"></div>
+                        <div class="w-2 h-2 bg-brand-400 rounded-full typing-dot"></div>
+                    </div>
+                    <span id="chatThinkingText" class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Thinking...</span>
+                </div>
+            `;
+            els.chatHistory.appendChild(loadingDiv);
+            els.chatHistory.scrollTop = els.chatHistory.scrollHeight;
+
+            const phrases = ["Thinking...", "Just a moment...", "Analyzing documents...", "Structuring answer...", "Referencing sources..."];
+            let phraseIndex = 0;
+            const phraseInterval = setInterval(() => {
+                const textEl = document.getElementById('chatThinkingText');
+                if (textEl) {
+                    phraseIndex = (phraseIndex + 1) % phrases.length;
+                    textEl.textContent = phrases[phraseIndex];
+                } else {
+                    clearInterval(phraseInterval);
+                }
+            }, 1800);
+
+            const context = getSelectedContext();
+            const fullPrompt = context ? 
+                `Context Information:\n${context}\n\nUser Query: ${input}` : 
+                input;
+
+            const response = await callGeminiAPI(SYSTEM_PROMPT, fullPrompt);
+            clearInterval(phraseInterval);
+            const loadEl = document.getElementById(loadingId);
+            if (loadEl) loadEl.remove();
+            els.sendBtn.disabled = false;
+
+            if (response.error) {
+                addMessageToChat('system', `<span class="text-red-500 font-semibold">${response.error}</span>`);
+            } else {
+                addMessageToChat('assistant', response.text);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
