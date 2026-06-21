@@ -1,11 +1,9 @@
-Prism-Business-Intelligence-Application
+# Prism App — Business Intelligence Notebook & Analysis Platform
 
 ---
 <img width="1919" height="893" alt="image" src="https://github.com/user-attachments/assets/e3382044-831a-4d8d-927e-5f0073a7e149" />
 
-
-# Prism App — Business Intelligence Notebook & Analysis Platform
-
+---
 Prism is an AI-powered business intelligence platform that transforms complex business documents such as sales reports, revenue reports, market analysis, and performance documents into actionable insights.
 
 Instead of manually analyzing lengthy reports, Prism uses AI to extract key information, generate executive-level insights, create visual analytics, and transform raw documents into decision-ready outputs.
