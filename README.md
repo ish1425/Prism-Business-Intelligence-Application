@@ -1,8 +1,8 @@
-# Prism-Business-Intelligence-Application
+Prism-Business-Intelligence-Application
 
 ---
 
-```markdown
+
 # Prism App — Business Intelligence Notebook & Analysis Platform
 
 Prism is an AI-powered business intelligence platform that transforms complex business documents such as sales reports, revenue reports, market analysis, and performance documents into actionable insights.
@@ -74,7 +74,7 @@ The platform flows sequentially through a logical business-analysis pipeline:
 
 ---
 
-```
+
 ## 📌 **Use Cases**
 
 Prism can assist with:
@@ -92,6 +92,6 @@ Prism can assist with:
 
 Distributed under the MIT License. 
 
-```
+
 
 ```
