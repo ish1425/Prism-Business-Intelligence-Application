@@ -26,7 +26,7 @@ Instead of manually analyzing lengthy reports, Prism uses AI to extract key info
   • Document Name — Page Y
 
 ```
-
+---
 ### AI Insight Map
 
 Converts complex reports into structured visual knowledge maps.
@@ -36,6 +36,8 @@ Converts complex reports into structured visual knowledge maps.
 - Related insights
 - Important trends
 - Connected information
+
+---
 
 ## 📑 Professional Report Generator
 
@@ -54,6 +56,7 @@ Generates executive-ready business reports from uploaded documents.
 - Trend analysis
 - Consolidated business insights
 
+---
 
 ## 🎯 SWOT Analysis Generator
 
@@ -66,6 +69,8 @@ Automatically creates a structured SWOT matrix.
 - Threats
 
 Presented in a concise business format suitable for decision-making.
+
+---
 
 ### 🎴 Executive AI Deck Generator
 
@@ -80,6 +85,8 @@ Transforms business documents into professional presentation decks.
 * *Modern Startup* (High-Contrast White / Slate Accent)
 * *Data Analytics* (Dark Matte / Soft Charcoal Panels)
 
+---
+
 ## 💡 AI Recommendation Engine
 
 Generates actionable business recommendations.
@@ -90,9 +97,7 @@ Generates actionable business recommendations.
 - Supporting insights
 - Expandable recommendation cards
 
-
 ---
-
 
 ### 🎙️ Audio Briefing Room (Podcast Mode)
 
